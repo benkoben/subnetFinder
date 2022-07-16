@@ -45,12 +45,12 @@ func main() {
 		// Populate the parent addressSpace
 		a.Set(address, cidr)
 		// Allocate the existing subnets as child addressSpaces
-		for index, subnet := range as.allocatedSubnets {
-			var s subnetcalc.AddressSpace
-			address, cidr := splitAddressNetmask
-			s.Set(address, cidr)
-			s.PrintIpPool()
-		}
+		// for index, subnet := range as.allocatedSubnets {
+		// 	var s subnetcalc.AddressSpace
+		// 	address, cidr := splitAddressNetmask
+		// 	s.Set(address, cidr)
+		// 	s.PrintIpPool()
+		// }
 		addressSpaces = append(addressSpaces, a)
 	}
 

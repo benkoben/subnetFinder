@@ -2,6 +2,8 @@ package subnetcalc
 
  // TODO: 
  //       Start a function that marks IP adresses that are taken
+ // 	  Create a method that adds child address spaces(subnets) to a parent
+//		     - Error contol must ensure that the child actually fits within a parent
  //       Start a function that calculcates new addresses according to desired state
  //		  Reword the CalculateIPv4AddressPool so that is contains less loops (?)
 
@@ -11,7 +13,19 @@ import (
 	"strings"
 	"unicode/utf8"
 	"github.com/brotherpowers/ipsubnet"
+	"errors"
 )
+
+// 
+// --- Custom errors
+//
+type ChildOutsideOfScopeError struct {
+	
+}
+
+func (c *ChildOutsideOfScopeError)
+
+var ChildOutsideOfScopeError = errors.New("")
 
 // -
 // --- Structs and methods are defined here
@@ -19,23 +33,9 @@ import (
 
 type AddressSpace struct {
 	ipSubnet *ipsubnet.Ip
-	subnets []*ipsubnet.Ip
-	ipPool IpPool
-}
-
-func (a* AddressSpace) PrintIpPool() {
-	fmt.Println(a.ipPool)
-}
-
-func (a *AddressSpace) Set(address string, cidr int) {
-	// Calculate multiple addresss
-	var pool IpPool
-	s := ipsubnet.SubnetCalculator(address, cidr)
-	subCidrFirstBin := ipsubnet.SubnetCalculator(s.GetIPAddressRange()[0], s.GetNetworkSize()).GetIPAddressBinary()
-	subCidrLastBin := ipsubnet.SubnetCalculator(s.GetIPAddressRange()[1], s.GetNetworkSize()).GetIPAddressBinary()
-	pool.addresses = CalculateIPv4AddressPool(subCidrFirstBin, subCidrLastBin)
-	a.ipSubnet = s
-	a.ipPool = pool
+	subnets []*AddressSpace
+	ipPool *IpPool
+	ranges *ranges
 }
 
 type IpPool struct {
@@ -48,8 +48,64 @@ type IpAddress struct {
 	available bool
 }
 
+// used to keep track of the first and last address of each address space
+// in different formats
+type ranges struct {
+	decimin int64
+	decimax int64
+	binmin string
+	binmax string
+	addrmin string
+	addrmax string
+}
+
+//
+// --- Methods start here
+// 
 func (ip *IpAddress) MarkIpv4Address() {
 	ip.available = false
+}
+
+// Add an address space to another address space
+// will error if the child is bigger in size than the parent
+func (parent *AddressSpace) SetChild(child *AddressSpace) {
+	// TODO: Learn about how Error interfaces work and implement proper error handling
+	switch {
+	case child.ranges.decimin < parent.ranges.decimin || child.ranges.decimax < parent.ranges.decimax:
+		fmt.Println(fmt.Sprintf("Child range %v-v% is outside the parent scope %v-%v", child.ranges.addrmin, child.ranges.addrmax, parent.ranges.decimin,parent.ranges.decimax ))
+	default:
+		// Add child to parent
+		parent.subnets = append(parent.subnets, child.ipSubnet)
+	}
+}
+
+// Dereference all struct attributes and print them
+// Used for debugging purposes
+func (a* AddressSpace) PrintAddressSpace() {
+	fmt.Println("IPSubnet: ", a.ipSubnet)
+	fmt.Println("Pool: ", a.ipPool)
+	fmt.Println("subnets: ", a.subnets)
+	fmt.Println("ranges: ", a.ranges)
+}
+
+func (a *AddressSpace) Set(address string, cidr int) {
+	s := ipsubnet.SubnetCalculator(address, cidr)
+	var pool *IpPool
+	var asr *ranges
+	asr = &ranges{
+		decimin: Convert32BitBinaryToDecimal(ipsubnet.SubnetCalculator(s.GetIPAddressRange()[0], s.GetNetworkSize()).GetIPAddressBinary()),
+		decimax: Convert32BitBinaryToDecimal(ipsubnet.SubnetCalculator(s.GetIPAddressRange()[1], s.GetNetworkSize()).GetIPAddressBinary()),
+		binmin: ipsubnet.SubnetCalculator(s.GetIPAddressRange()[0], s.GetNetworkSize()).GetIPAddressBinary(),
+		binmax: ipsubnet.SubnetCalculator(s.GetIPAddressRange()[1], s.GetNetworkSize()).GetIPAddressBinary(),
+		addrmin: s.GetIPAddressRange()[0],
+		addrmax: s.GetIPAddressRange()[1],
+	}
+	pool = &IpPool{
+		addresses: CalculateIPv4AddressPool(asr),
+	}
+	a.ranges = asr
+	a.ipSubnet = s
+	a.ipPool = pool
 }
 
 // -
@@ -98,12 +154,10 @@ func ConvertDecimalTo32BitBinaryString(num int64) string {
 }
 
 // Calcute the range of IP addreses between a first and last set of IP addresses expresses as binary strings
-func CalculateIPv4AddressPool(firstAddress, lastAddress string) []IpAddress {
+func CalculateIPv4AddressPool(r *ranges) []IpAddress {
 	var ipPool []IpAddress
 	var decimalPool []int64
-	min := Convert32BitBinaryToDecimal(firstAddress)
-	max := Convert32BitBinaryToDecimal(lastAddress)
-	for i := min; i <= max; i++ {
+	for i := r.decimin; i <= r.decimax; i++ {
 		decimalPool = append(decimalPool, i)
 	}
 	for _, decSnet := range decimalPool {
