@@ -13,19 +13,18 @@ import (
 	"strings"
 	"unicode/utf8"
 	"github.com/brotherpowers/ipsubnet"
-	"errors"
 )
 
 // 
 // --- Custom errors
 //
-type ChildOutsideOfScopeError struct {
+// type ChildOutsideOfScopeError struct {
 	
-}
+// }
 
-func (c *ChildOutsideOfScopeError)
+// func (c *ChildOutsideOfScopeError)
 
-var ChildOutsideOfScopeError = errors.New("")
+// var ChildOutsideOfScopeError = errors.New("")
 
 // -
 // --- Structs and methods are defined here
@@ -71,11 +70,11 @@ func (ip *IpAddress) MarkIpv4Address() {
 func (parent *AddressSpace) SetChild(child *AddressSpace) {
 	// TODO: Learn about how Error interfaces work and implement proper error handling
 	switch {
-	case child.ranges.decimin < parent.ranges.decimin || child.ranges.decimax < parent.ranges.decimax:
+	case child.ranges.decimin < parent.ranges.decimin || child.ranges.decimax > parent.ranges.decimax:
 		fmt.Println(fmt.Sprintf("Child range %v-v% is outside the parent scope %v-%v", child.ranges.addrmin, child.ranges.addrmax, parent.ranges.decimin,parent.ranges.decimax ))
 	default:
 		// Add child to parent
-		parent.subnets = append(parent.subnets, child.ipSubnet)
+		parent.subnets = append(parent.subnets, child)
 	}
 }
 
