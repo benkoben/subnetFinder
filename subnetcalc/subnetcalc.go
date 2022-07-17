@@ -68,23 +68,26 @@ func (ip *IpAddress) MarkIpv4Address() {
 // Add an address space to another address space
 // will error if the child is bigger in size than the parent
 func (parent *AddressSpace) SetChild(child *AddressSpace) {
-	// TODO: Learn about how Error interfaces work and implement proper error handling
-	switch {
-	case child.ranges.decimin < parent.ranges.decimin || child.ranges.decimax > parent.ranges.decimax:
-		fmt.Println(fmt.Sprintf("Child range %v-v% is outside the parent scope %v-%v", child.ranges.addrmin, child.ranges.addrmax, parent.ranges.decimin,parent.ranges.decimax ))
-	default:
+	if ChildWithinScope(parent, child) {
 		// Add child to parent
+		// fmt.Println(fmt.Sprintf("Adding %v to parent %v", child.ipSubnet, parent.ipSubnet))
 		parent.subnets = append(parent.subnets, child)
 	}
 }
 
 // Dereference all struct attributes and print them
 // Used for debugging purposes
-func (a* AddressSpace) PrintAddressSpace() {
+func (a *AddressSpace) PrintAddressSpace() {
 	fmt.Println("IPSubnet: ", a.ipSubnet)
 	fmt.Println("Pool: ", a.ipPool)
 	fmt.Println("subnets: ", a.subnets)
 	fmt.Println("ranges: ", a.ranges)
+}
+
+func (a *AddressSpace) PrintChildren(){
+	for _, s := range a.subnets {
+		s.PrintAddressSpace()
+	}
 }
 
 func (a *AddressSpace) Set(address string, cidr int) {
@@ -164,6 +167,14 @@ func CalculateIPv4AddressPool(r *ranges) []IpAddress {
 		ipPool = append(ipPool, IpAddress{address: ConvertBinaryStringToDottedDecimalIPv4(binaryString), mask: 32, available: true})
 	}
 	return ipPool
+}
+
+func ChildWithinScope(parent *AddressSpace, child *AddressSpace) bool {
+	var withinScope bool
+	if child.ranges.decimin >= parent.ranges.decimin && child.ranges.decimax <= parent.ranges.decimax {
+		withinScope = true
+	}
+	return withinScope
 }
 
 // -
