@@ -68,10 +68,12 @@ func main() {
 			a.SetChild(&subnets[j])
 		}
 		addressSpaces[i] = a
+		addressSpaces[i].PrintAddressSpace()
 	}
-	for _, a := range addressSpaces {
-		a.PrintChildren()
-	}
+
+	// for _, a := range addressSpaces {
+	// 	a.PrintChildren()
+	// }
 
 	fmt.Println("Done :)")
 }

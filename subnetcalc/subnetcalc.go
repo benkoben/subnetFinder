@@ -2,8 +2,7 @@ package subnetcalc
 
  // TODO: 
  //       Start a function that marks IP adresses that are taken
- // 	  Create a method that adds child address spaces(subnets) to a parent
-//		     - Error contol must ensure that the child actually fits within a parent
+ // 	  Mark already taken ipAddresses
  //       Start a function that calculcates new addresses according to desired state
  //		  Reword the CalculateIPv4AddressPool so that is contains less loops (?)
 
@@ -18,13 +17,6 @@ import (
 // 
 // --- Custom errors
 //
-// type ChildOutsideOfScopeError struct {
-	
-// }
-
-// func (c *ChildOutsideOfScopeError)
-
-// var ChildOutsideOfScopeError = errors.New("")
 
 // -
 // --- Structs and methods are defined here
@@ -61,6 +53,8 @@ type ranges struct {
 //
 // --- Methods start here
 // 
+
+// Mark the IP address of a parent addressSpace as not available
 func (ip *IpAddress) MarkIpv4Address() {
 	ip.available = false
 }
@@ -69,9 +63,12 @@ func (ip *IpAddress) MarkIpv4Address() {
 // will error if the child is bigger in size than the parent
 func (parent *AddressSpace) SetChild(child *AddressSpace) {
 	if ChildWithinScope(parent, child) {
-		// Add child to parent
-		// fmt.Println(fmt.Sprintf("Adding %v to parent %v", child.ipSubnet, parent.ipSubnet))
+		// Add child to parent and mark the addresses in parent ipPool as not available
 		parent.subnets = append(parent.subnets, child)
+		firstIpIndex, lastIpIndex := IpPoolChunkIndexes(parent.ipPool, child.ranges.addrmin, child.ranges.addrmax)
+		for i:=firstIpIndex; i<=lastIpIndex; i++ {
+			parent.ipPool.addresses[i].MarkIpv4Address()
+		}
 	}
 }
 
@@ -176,6 +173,25 @@ func ChildWithinScope(parent *AddressSpace, child *AddressSpace) bool {
 	}
 	return withinScope
 }
+
+// Retrieves the start and stop for first and last ips in a larger collection of IP addresses
+func IpPoolChunkIndexes(pool *IpPool, firstIp, lastIp string) (int, int) {
+	var start int
+	var stop int
+	for i := 0; i < len(pool.addresses) && start == 0 || stop == 0; i++ {
+		switch {
+		case pool.addresses[i].address == firstIp:
+			start = i
+		case pool.addresses[i].address == lastIp:
+			stop = i
+		}
+	}
+	return start, stop
+}
+
+// func ChildIndex(parent, child *AddressSpace) int {
+
+// } 
 
 // -
 // --- Program execution defined here
