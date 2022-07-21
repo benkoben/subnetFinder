@@ -23,6 +23,33 @@ var CaseConvert32BitBinaryToDecimal = []struct{
 	},
 }
 
+var CaseMaskHostsSize = []struct{
+	description string
+	input       int
+	expected    int64
+}{
+	{
+		description: "",
+		input: 24,
+		expected: 256,
+	},
+	{
+		description: "",
+		input: 23,
+		expected: 512,
+	},
+	{
+		description: "",
+		input: 22,
+		expected: 1024,
+	},
+	{
+		description: "",
+		input: 8,
+		expected: 16777216,
+	},
+}
+
 var CaseConvertDecimalTo32BitBinaryString = []struct{
 	description string
 	input       int64
@@ -132,6 +159,17 @@ func TestCalculateIPv4AddressPool(t *testing.T){
 				}
 			}
 			t.Logf("CalculateIPv4AddressPool test OK!")
+		}
+	}
+}
+
+func TestMaskHostsSize(t *testing.T){
+	for _, i := range CaseMaskHostsSize {
+		result := MaskHostsSize(i.input)
+		if result != i.expected {
+			t.Errorf("MaskHostsSize(%v) = %v; want %v", i.input, result, i.expected)
+		} else {
+			t.Logf("MaskHostsSize test OK!")
 		}
 	}
 }
