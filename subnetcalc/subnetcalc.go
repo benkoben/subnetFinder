@@ -75,30 +75,34 @@ func (parent *AddressSpace) SetChild(child *AddressSpace) {
 }
 
 // Find the next available indexes where a certain subnet can be allocated within the available parent.IpSubnet
-func (parent *AddressSpace) NewSubnet(mask int) {
+func (parent *AddressSpace) NewSubnet(mask int) AddressSpace {
     var start int
     var stop int
     var chunk int
+    var subnet AddressSpace
     chunk = MaskHostsSize(mask)
     stop = chunk - 1
     for i:=start;stop<=len(parent.ipPool.addresses); i+=chunk {
         if parent.ipPool.addresses[i].available == true && parent.ipPool.addresses[stop].available == true {
-            fmt.Println("Available range:")
-            fmt.Println(parent.ipPool.addresses[i], parent.ipPool.addresses[stop])
+            subnet.Set(parent.ipPool.addresses[i].address, mask)
+            parent.SetChild(&subnet)
+            break
         }
-
-         // fmt.Println(parent.ipPool.addre[[sses[i],parent.ipPool.addresses[stop])
         stop += chunk
     }
+    return subnet
 }
 
 // Dereference all struct attributes and print them
 // Used for debugging purposes
 func (a *AddressSpace) PrintAddressSpace() {
-	fmt.Println("IPSubnet: ", a.ipSubnet)
-	fmt.Println("Pool length & content: ", len(a.ipPool.addresses), a.ipPool)
-	fmt.Println("subnets: ", a.subnets)
-	fmt.Println("ranges: ", a.ranges)
+	// fmt.Println("IPSubnet: ", a.ipSubnet)
+	// fmt.Println("Pool length & content: ", len(a.ipPool.addresses), a.ipPool)
+    fmt.Println("  Allocated subnets:")
+    for _, s := range a.subnets {
+        fmt.Println("    ", s.ipSubnet)
+    }
+	// fmt.Println("ranges: ", a.ranges)
 }
 
 func (a *AddressSpace) PrintChildren(){

@@ -32,14 +32,11 @@ func main() {
 		addressSpaces: []string{
 			"10.100.100.0/24", 
 			"172.16.0.0/24", 
-			"192.168.10.0/28",
+			"192.168.10.0/24",
 		},
 		name: "bigAssLandingZone",
 		allocatedSubnets: []string{
 			"10.100.100.0/25",
-			// "10.100.101.0/24",
-			// "10.100.102.2/24",
-			// "10.100.103.3/24",
 			"172.16.0.0/25",
 			"172.16.0.128/25",
 			"192.168.10.0/30",
@@ -62,11 +59,23 @@ func main() {
 		},
 		{
 			name: "dataBricksPub",
-			size: 26,
+			size: 30,
+		},
+		{
+			name: "testingSubnet",
+			size: 30,
 		},
 	}
-
-
+    fmt.Println("Current vnet address spaces:")
+    fmt.Println("----")
+    fmt.Println(dummyVnet.addressSpaces)
+    fmt.Println("")
+    fmt.Println("Add the following: ")
+    fmt.Println("----")
+    fmt.Println(newSubnets)
+    fmt.Println("")
+    fmt.Println("Before: ")
+    fmt.Println("----")
 	// Loopa igenom varnewenda addressSpace
 	for _, as := range dummyVnet.addressSpaces {
 		var a subnetcalc.AddressSpace
@@ -77,7 +86,6 @@ func main() {
 		// Allocate the existing subnets as child addressSpaces
 		addressSpaces = append(addressSpaces, a)
 	}
-
 	// Allocate child addressSpaces in memory for each subnet of the vnet
 	for _, subnet := range dummyVnet.allocatedSubnets {
 		var s subnetcalc.AddressSpace
@@ -94,9 +102,20 @@ func main() {
 			a.SetChild(&subnets[j])
 		}
 		addressSpaces[i] = a
+        for _, s :=  range newSubnets {
+            addressSpaces[i].NewSubnet(s.size)
+        }
+        a.PrintAddressSpace()
 	}
 
-    addressSpaces[0].NewSubnet(newSubnets[0].size)
+
+    fmt.Println("After: ")
+    fmt.Println("----")
+    for _, i := range addressSpaces {
+        i.PrintAddressSpace()
+    }
+    // snet.PrintAddressSpace()
+    
     // for _, ns := range newSubnets {
     //     fmt.Println(subnetcalc.MaskHostsSize(ns.size))
     // }
