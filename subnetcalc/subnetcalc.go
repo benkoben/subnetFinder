@@ -74,6 +74,10 @@ func (parent *AddressSpace) SetChild(child *AddressSpace) {
 	}
 }
 
+func (a *AddressSpace) GetCidrNotation() string {
+    return fmt.Sprintf("%v/%v", a.ipSubnet.GetIPAddress(), a.ipSubnet.GetNetworkSize())
+}
+
 // Find the next available indexes where a certain subnet can be allocated within the available parent.IpSubnet
 func (parent *AddressSpace) NewSubnet(mask int) AddressSpace {
     var start int
