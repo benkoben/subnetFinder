@@ -1,11 +1,7 @@
 package subnetcalc
 
  // TODO: 
- //       Start a function that marks IP adresses that are taken
- // 	  Create a method that adds child address spaces(subnets) to a parent
-//		     - Error contol must ensure that the child actually fits within a parent
  //       Start a function that calculcates new addresses according to desired state
- //		  Reword the CalculateIPv4AddressPool so that is contains less loops (?)
 
 import (
 	"fmt"
@@ -15,16 +11,13 @@ import (
 	"github.com/brotherpowers/ipsubnet"
 )
 
+//
+// --- Global variables
+//
+
 // 
 // --- Custom errors
 //
-// type ChildOutsideOfScopeError struct {
-	
-// }
-
-// func (c *ChildOutsideOfScopeError)
-
-// var ChildOutsideOfScopeError = errors.New("")
 
 // -
 // --- Structs and methods are defined here
@@ -61,6 +54,8 @@ type ranges struct {
 //
 // --- Methods start here
 // 
+
+// Mark the IP address of a parent addressSpace as not available
 func (ip *IpAddress) MarkIpv4Address() {
 	ip.available = false
 }
@@ -69,19 +64,49 @@ func (ip *IpAddress) MarkIpv4Address() {
 // will error if the child is bigger in size than the parent
 func (parent *AddressSpace) SetChild(child *AddressSpace) {
 	if ChildWithinScope(parent, child) {
-		// Add child to parent
-		// fmt.Println(fmt.Sprintf("Adding %v to parent %v", child.ipSubnet, parent.ipSubnet))
+		// Add child to parent and mark the addresses in parent ipPool as not available
 		parent.subnets = append(parent.subnets, child)
+		firstIpIndex, lastIpIndex := IpPoolChunkIndexes(parent.ipPool, child.ranges.addrmin, child.ranges.addrmax)
+		// fmt.Println(child.ranges.addrmin)
+		for i:=firstIpIndex; i<=lastIpIndex; i++ {
+			parent.ipPool.addresses[i].MarkIpv4Address()
+		}
 	}
+}
+
+func (a *AddressSpace) GetCidrNotation() string {
+    return fmt.Sprintf("%v/%v", a.ipSubnet.GetIPAddress(), a.ipSubnet.GetNetworkSize())
+}
+
+// Find the next available indexes where a certain subnet can be allocated within the available parent.IpSubnet
+func (parent *AddressSpace) NewSubnet(mask int) AddressSpace {
+    var start int
+    var stop int
+    var chunk int
+    var subnet AddressSpace
+    chunk = MaskHostsSize(mask)
+    stop = chunk - 1
+    for i:=start;stop<=len(parent.ipPool.addresses); i+=chunk {
+        if parent.ipPool.addresses[i].available == true && parent.ipPool.addresses[stop].available == true {
+            subnet.Set(parent.ipPool.addresses[i].address, mask)
+            parent.SetChild(&subnet)
+            break
+        }
+        stop += chunk
+    }
+    return subnet
 }
 
 // Dereference all struct attributes and print them
 // Used for debugging purposes
 func (a *AddressSpace) PrintAddressSpace() {
-	fmt.Println("IPSubnet: ", a.ipSubnet)
-	fmt.Println("Pool: ", a.ipPool)
-	fmt.Println("subnets: ", a.subnets)
-	fmt.Println("ranges: ", a.ranges)
+	// fmt.Println("IPSubnet: ", a.ipSubnet)
+	// fmt.Println("Pool length & content: ", len(a.ipPool.addresses), a.ipPool)
+    fmt.Println("  Allocated subnets:")
+    for _, s := range a.subnets {
+        fmt.Println("    ", s.ipSubnet)
+    }
+	// fmt.Println("ranges: ", a.ranges)
 }
 
 func (a *AddressSpace) PrintChildren(){
@@ -169,6 +194,22 @@ func CalculateIPv4AddressPool(r *ranges) []IpAddress {
 	return ipPool
 }
 
+// Calculates the number of hosts available for a certain netmask
+// This function is used to retrieve the end index number of a addressSpace.IpPool
+// when a new subnet is fitted within it.
+func MaskHostsSize(mask int) int {
+    hostBits := 32 - mask
+    binary := fmt.Sprintf("%s", strings.Repeat("1", hostBits))
+    size, err := strconv.ParseInt(binary, 2, 64) 
+    if err != nil {
+       fmt.Println(err) 
+    }
+    // 
+    return int(size) + 1
+} 
+
+
+// See if a child addressSpace actually is a legal fit within a parent addressSpace
 func ChildWithinScope(parent *AddressSpace, child *AddressSpace) bool {
 	var withinScope bool
 	if child.ranges.decimin >= parent.ranges.decimin && child.ranges.decimax <= parent.ranges.decimax {
@@ -177,6 +218,17 @@ func ChildWithinScope(parent *AddressSpace, child *AddressSpace) bool {
 	return withinScope
 }
 
-// -
-// --- Program execution defined here
-// -
+// Retrieves the start and stop for first and last ips in a larger collection of IP addresses
+func IpPoolChunkIndexes(pool *IpPool, firstIp, lastIp string) (int, int) {
+	var start int
+	var stop int
+	for i := 0; i < len(pool.addresses) && start == 0 || stop == 0; i++ {
+		switch {
+		case pool.addresses[i].address == firstIp:
+			start = i
+		case pool.addresses[i].address == lastIp:
+			stop = i
+		}
+	}
+	return start, stop
+}
