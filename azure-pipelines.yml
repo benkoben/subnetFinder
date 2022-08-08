@@ -13,4 +13,5 @@ steps:
 - task: Go@0
   inputs:
     command: 'test'
+    arguments: '-v'
     workingDirectory: '$(System.DefaultWorkingDirectory)/subnetcalc'
