@@ -1,3 +1,8 @@
+TODO
+===
+1. Rewrite main.go so that I can compile it and use it in my CI/CD pipelines
+2. Create a simple http server module so that subnetcalc can be called from an HTTP endpoint
+
 Subnetcalc
 ===
 
@@ -6,7 +11,7 @@ A simple program that calculcates the next possible subnets inside an existing s
 Why I created this
 ===
 
-I wanted to fully automate IaC deployments to virtual networks inside Azure. The reason why I wrote it in GOlang is because of flexibility and I wanted to learn more about GOlang concepts.
+I wanted to fully automate IaC deployments to virtual networks inside Azure. The reason why I wrote it in Go is because of use-case flexibility and I wanted to learn more about Go concepts.
 
 This program can be run as a standalone binary inside a CI/CD agent or hosted as an API endpoint (for managed CI/CD agents)
 
