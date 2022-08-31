@@ -1,21 +1,74 @@
 package main
 
+// TODO:
+// - Rewrite the main module so that it can be used as an API
+
 import (
 	"fmt"
 	"mymodule/subnetcalc"
-	"strings"
+    "encoding/json"
+    "log"
+    "io"
+    "os"
+    "flag"
+    "strings"
 	"strconv"
 )
 
-type vnet struct {
-	addressSpaces []string
-	name string
-	allocatedSubnets []string
+var (
+    addressSpaces []subnetcalc.AddressSpace // collection that holds all addressPrefixes present in virtual network
+    subnets []subnetcalc.AddressSpace       // collection that holds subnets that already exist in virtual network
+    data *VirtualNetwork                    //object that holds input data (i.e. the virtual network)
+    calculatedSubnets []Subnet
+    out Output
+    vnet = flag.String("vnet", "", `
+      []object{
+          AddressSpace []object{AddressPrefixes []string},
+          Subnets []string
+      }
+      example:
+      VNET=$(az network vnet show -n hub-vnet-weeu-dev-001 -g connectivity-rg-weeu-dev-001 -o json)
+      ./subnetCalc -vnet $VNET
+    `)
+    desiredSubnets   = flag.String(
+                        "new-subnets",
+                        "",
+                        `
+    []map[string]int
+
+    example:
+        SUBNETS='[{"aks":24}, {"dbxPriv": 28}, {"dbsPub": 28}]'
+        ./subnetCalc -new-subnets=$SUBNETS
+
+    `)
+)
+
+
+type Output struct {
+    Parameters []Subnet `json:"parameters"`
 }
 
-type subnet struct {
-	name string
-	size int
+type Subnet struct {
+    Name string `json:"name"`
+    Prefix string `json:"prefix"`
+}
+
+type SpaceCollection struct {
+     AddressPrefixes []string `json:"addressPrefixes"`
+}
+
+type VirtualNetwork struct {
+    AddressSpace   SpaceCollection    `json:"addressSpace"`
+    Subnets         []string          `json:"subnets"`
+    DesiredSubnets  []map[string]int  `json:"desiredSubnets"`
+    Location        string            `json:"location"`
+}
+
+func (vnet *VirtualNetwork) unmarshalVirtualNetwork(jsonString []byte){
+    jsonErr := json.Unmarshal(jsonString, &data)
+    if jsonErr != nil {
+        fmt.Printf("Input error %v", jsonErr)
+    }
 }
 
 func splitAddressNetmask(s string) (string, int){
@@ -26,74 +79,44 @@ func splitAddressNetmask(s string) (string, int){
 }
 
 func main() {
-	var addressSpaces []subnetcalc.AddressSpace
-	var subnets []subnetcalc.AddressSpace
-	var dummyVnet = vnet{
-		addressSpaces: []string{
-			"10.100.100.0/24", 
-			"172.16.0.0/24", 
-			"192.168.10.0/24",
-		},
-		name: "bigAssLandingZone",
-		allocatedSubnets: []string{
-			"10.100.100.0/25",
-			"172.16.0.0/25",
-			"172.16.0.128/25",
-			"192.168.10.0/30",
-			"192.168.10.4/30",
-		},
-	}
+    flag.Parse()
 
-	var newSubnets = []subnet{
-		{
-			name: "functionAppSubnet",
-			size: 25,
-		},
-		{
-			name: "aksSubnet",
-			size: 26,
-		},
-		{
-			name: "dataBricksPriv",
-			size: 26,
-		},
-		{
-			name: "dataBricksPub",
-			size: 30,
-		},
-		{
-			name: "testingSubnet",
-			size: 30,
-		},
-	}
-    fmt.Println("Current vnet address spaces:")
-    fmt.Println("----")
-    fmt.Println(dummyVnet.addressSpaces)
-    fmt.Println("")
-    fmt.Println("Add the following: ")
-    fmt.Println("----")
-    fmt.Println(newSubnets)
-    fmt.Println("")
-    fmt.Println("Before: ")
-    fmt.Println("----")
-	// Loopa igenom varnewenda addressSpace
-	for _, as := range dummyVnet.addressSpaces {
+    if len(*vnet) > 0 {
+        log.Println("Reading from cmdline flag")
+        data.unmarshalVirtualNetwork([]byte(*vnet))
+    } else {
+        log.Println("Reading from stdin")
+        bytes, inputErr := io.ReadAll(os.Stdin)
+        if inputErr != nil {
+            fmt.Printf("Input error %v", inputErr)
+        }
+        data.unmarshalVirtualNetwork(bytes)
+    }
+
+    if len(*desiredSubnets) > 0 {
+        desiredSubnets := fmt.Sprintf("{\"desiredSubnets\": %s}", *desiredSubnets)
+        data.unmarshalVirtualNetwork([]byte(desiredSubnets))
+    }
+    log.Printf("json addressPrefixes: %#v\n", data.AddressSpace.AddressPrefixes)
+    log.Printf("json subnets: %#v\n", data.Subnets)
+    log.Printf("json subnets: %#v\n", data.DesiredSubnets)
+
+    for i := range data.AddressSpace.AddressPrefixes {
 		var a subnetcalc.AddressSpace
-		
-		address, cidr := splitAddressNetmask(as)
+		address, cidr := splitAddressNetmask(data.AddressSpace.AddressPrefixes[i])
 		// Populate the parent addressSpace
 		a.Set(address, cidr)
 		// Allocate the existing subnets as child addressSpaces
 		addressSpaces = append(addressSpaces, a)
-	}
-	// Allocate child addressSpaces in memory for each subnet of the vnet
-	for _, subnet := range dummyVnet.allocatedSubnets {
+    }
+    // Create addressSpace objects for each subnet
+    // These will be added to their corresponding parent addressSpace 
+    for i := range data.Subnets {
 		var s subnetcalc.AddressSpace
-		address, cidr := splitAddressNetmask(subnet)
+		address, cidr := splitAddressNetmask(data.Subnets[i])
 		s.Set(address, cidr)
 		subnets = append(subnets, s)
 	}
-	// fmt.Println(subnets)
 	// Set all children (subnet address spaces are added to parent address space)
 	// Use indexes instead in order to modify the original addressSpace slice
 	// https://stackoverflow.com/questions/20185511/range-references-instead-values
@@ -101,28 +124,21 @@ func main() {
 		for j := range subnets {
 			a.SetChild(&subnets[j])
 		}
+        // Save addressSpace to collection
 		addressSpaces[i] = a
-        for _, s :=  range newSubnets {
-            addressSpaces[i].NewSubnet(s.size)
+        for z :=  range data.DesiredSubnets {
+            for key, val := range data.DesiredSubnets[z] {
+                subnet := addressSpaces[i].NewSubnet(val)
+                prefix := fmt.Sprintf("%s/%d", subnet.IpSubnet.GetIPAddress(), subnet.IpSubnet.GetNetworkSize())  
+                s := Subnet{key, prefix}
+                calculatedSubnets = append(calculatedSubnets, s) 
+            }
         }
-        a.PrintAddressSpace()
 	}
-
-
-    fmt.Println("After: ")
-    fmt.Println("----")
-    for _, i := range addressSpaces {
-        i.PrintAddressSpace()
+    output := Output{Parameters: calculatedSubnets}
+    b, err := json.MarshalIndent(output, "", "  ")
+    if err != nil {
+        fmt.Println(err)
     }
-    // snet.PrintAddressSpace()
-    
-    // for _, ns := range newSubnets {
-    //     fmt.Println(subnetcalc.MaskHostsSize(ns.size))
-    // }
-
-	// for _, a := range addressSpaces {
-	// 	a.PrintChildren()
-	// }
-
-	fmt.Println("Done :)")
+    fmt.Print(string(b))
 }

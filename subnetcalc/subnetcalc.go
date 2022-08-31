@@ -24,7 +24,7 @@ import (
 // -
 
 type AddressSpace struct {
-	ipSubnet *ipsubnet.Ip
+	IpSubnet *ipsubnet.Ip
 	subnets []*AddressSpace
 	ipPool *IpPool
 	ranges *ranges
@@ -75,7 +75,7 @@ func (parent *AddressSpace) SetChild(child *AddressSpace) {
 }
 
 func (a *AddressSpace) GetCidrNotation() string {
-    return fmt.Sprintf("%v/%v", a.ipSubnet.GetIPAddress(), a.ipSubnet.GetNetworkSize())
+    return fmt.Sprintf("%v/%v", a.IpSubnet.GetIPAddress(), a.IpSubnet.GetNetworkSize())
 }
 
 // Find the next available indexes where a certain subnet can be allocated within the available parent.IpSubnet
@@ -100,14 +100,15 @@ func (parent *AddressSpace) NewSubnet(mask int) AddressSpace {
 // Dereference all struct attributes and print them
 // Used for debugging purposes
 func (a *AddressSpace) PrintAddressSpace() {
-	// fmt.Println("IPSubnet: ", a.ipSubnet)
+	fmt.Println("IPSubnet: ", a.IpSubnet)
 	// fmt.Println("Pool length & content: ", len(a.ipPool.addresses), a.ipPool)
     fmt.Println("  Allocated subnets:")
     for _, s := range a.subnets {
-        fmt.Println("    ", s.ipSubnet)
+        fmt.Println("    ", s.IpSubnet)
     }
 	// fmt.Println("ranges: ", a.ranges)
 }
+
 
 func (a *AddressSpace) PrintChildren(){
 	for _, s := range a.subnets {
@@ -131,7 +132,7 @@ func (a *AddressSpace) Set(address string, cidr int) {
 		addresses: CalculateIPv4AddressPool(asr),
 	}
 	a.ranges = asr
-	a.ipSubnet = s
+	a.IpSubnet = s
 	a.ipPool = pool
 }
 
