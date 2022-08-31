@@ -6,9 +6,7 @@ A simple program that calculcates the next possible subnets inside an existing s
 Why I created this
 ===
 
-I wanted to fully automate IaC deployments to virtual networks inside Azure. The reason why I wrote it in GOlang is because of flexibility and I wanted to learn more about GOlang concepts.
-
-This program can be run as a standalone binary inside a CI/CD agent or hosted as an API endpoint (for managed CI/CD agents)
+In some cases when landingzones in the cloud start growing. I created this tool in order to calculate subnets prefixes within an existing virtual network in order to make infrastrucutre deployments fully automated. Think "project vending machine" and "network provisioning". 
 
 Testing
 ===
@@ -18,5 +16,29 @@ Unit testing is done by editing `subnetcalc_tests.go`. Tests are comprised of:
 2. A test function - Calls the function or method thats tested with Case variable as argument.
 
 How to use?
-===
+==
+
+```
+az network vnet show -n hub-vnet-weeu-dev-001 -g connectivity-rg-weeu-dev-001 -o json | go run main.go -new-subnets '[{"aks":24}, {"dbxPriv": 28}, {"dbsPub": 22}]'
+2022/08/31 15:22:32 Reading from stdin
+2022/08/31 15:22:37 json addressPrefixes: []string{"10.100.0.0/16"}
+2022/08/31 15:22:37 json subnets: []string{}
+2022/08/31 15:22:37 json subnets: []map[string]int{map[string]int{"aks":24}, map[string]int{"dbxPriv":28}, map[string]int{"dbsPub":22}}
+{
+  "parameters": [
+    {
+      "name": "aks",
+      "prefix": "10.100.0.0/24"
+    },
+    {
+      "name": "dbxPriv",
+      "prefix": "10.100.1.0/28"
+    },
+    {
+      "name": "dbsPub",
+      "prefix": "10.100.4.0/22"
+    }
+  ]
+}}
+```
 
