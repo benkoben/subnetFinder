@@ -6,7 +6,7 @@ A simple program that calculcates the next possible subnets inside an existing s
 Why I created this
 ===
 
-In some cases when landingzones in the cloud start growing. I created this tool in order to calculate subnets prefixes within an existing virtual network in order to make infrastrucutre deployments fully automated. Think "project vending machine" and "network provisioning". 
+I created this tool in order to calculate subnets prefixes within an existing virtual network. The idea is to help CD pipelines that deploy "vending machine" infrastrucutre. It works by generating network parameters based on existing virtual networks.
 
 How to use?
 ==
