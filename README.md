@@ -46,5 +46,7 @@ az network vnet show -n hub-vnet-weeu-dev-001 -g connectivity-rg-weeu-dev-001 -o
 ```
 
 **Method 2:**
+```
 VNET=$(az network vnet show -n hub-vnet-weeu-dev-001 -g connectivity-rg-weeu-dev-001 -o json)
 go run main.go -new-subnets -vnet "${VNET}"
+```
