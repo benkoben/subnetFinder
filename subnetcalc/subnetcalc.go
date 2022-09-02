@@ -1,8 +1,5 @@
 package subnetcalc
 
-// TODO:
-//       Start a function that calculcates new addresses according to desired state
-
 import (
 	"fmt"
 	"strconv"
@@ -11,14 +8,6 @@ import (
 
 	"github.com/brotherpowers/ipsubnet"
 )
-
-//
-// --- Global variables
-//
-
-//
-// --- Custom errors
-//
 
 // -
 // --- Structs and methods are defined here
@@ -41,8 +30,10 @@ type IpAddress struct {
 	available bool
 }
 
-// used to keep track of the first and last address of each address space
-// in different formats
+/*
+    used to keep track of the first and last address of each address space
+    in different formats
+*/
 type ranges struct {
 	decimin int64
 	decimax int64
@@ -52,17 +43,17 @@ type ranges struct {
 	addrmax string
 }
 
-//
-// --- Methods start here
-// 
-
-// Mark the IP address of a parent addressSpace as not available
+/*
+    Mark the IP address of a parent addressSpace as not available
+*/
 func (ip *IpAddress) MarkIpv4Address() {
 	ip.available = false
 }
 
-// Add an address space to another address space
-// will error if the child is bigger in size than the parent
+/*
+    Add an address space to another address space
+    will error if the child is bigger in size than the parent
+*/
 func (parent *AddressSpace) SetChild(child *AddressSpace) {
 	if ChildWithinScope(parent, child) {
 		// Add child to parent and mark the addresses in parent ipPool as not available
@@ -75,11 +66,17 @@ func (parent *AddressSpace) SetChild(child *AddressSpace) {
 	}
 }
 
+/*
+    Returns a string representing a complete network address prefix (CIDR notation)
+*/
 func (a *AddressSpace) GetCidrNotation() string {
     return fmt.Sprintf("%v/%v", a.IpSubnet.GetIPAddress(), a.IpSubnet.GetNetworkSize())
 }
 
-// Find the next available indexes where a certain subnet can be allocated within the available parent.IpSubnet
+/*
+    Creates a new addressSpace representing a subnet. If no available spaces are found within a parent AddressSpace
+    then this method return a AddressSpace struct with all its keywords set to nil values.
+*/
 func (parent *AddressSpace) NewSubnet(mask int) AddressSpace {
     var start int
     var stop int
@@ -98,25 +95,32 @@ func (parent *AddressSpace) NewSubnet(mask int) AddressSpace {
     return subnet
 }
 
-// Dereference all struct attributes and print them
-// Used for debugging purposes
+/*
+    Dereference all struct attributes and print them
+    Used for debugging purposes
+*/
 func (a *AddressSpace) PrintAddressSpace() {
 	fmt.Println("IPSubnet: ", a.IpSubnet)
-	// fmt.Println("Pool length & content: ", len(a.ipPool.addresses), a.ipPool)
+	fmt.Println("Pool length & content: ", len(a.ipPool.addresses), a.ipPool)
     fmt.Println("  Allocated subnets:")
     for _, s := range a.subnets {
         fmt.Println("    ", s.IpSubnet)
     }
-	// fmt.Println("ranges: ", a.ranges)
 }
 
-
+/*
+    Use for debugging purposes. Dereference and print all of the children currently allocated to an AddressSpace
+*/
 func (a *AddressSpace) PrintChildren(){
 	for _, s := range a.subnets {
 		s.PrintAddressSpace()
 	}
 }
 
+/*
+    Initialize a new addressSpace
+    All keywords are set with values representing a Virtual network object
+*/
 func (a *AddressSpace) Set(address string, cidr int) {
 	s := ipsubnet.SubnetCalculator(address, cidr)
 	var pool *IpPool
@@ -167,10 +171,12 @@ func ConvertBinaryStringToDottedDecimalIPv4(nonDottedBinary string)string{
 	return strings.Join(octets[:], ".")
 }
 
-// binary octets for RFC1918 networks
-// 10.0.0.0/8 (24 bit block)     = 00001010. 00000000.00000000.00000000
-// 172.16.0.0/12 (20 bit block)  = 10110000.0001 0000.00000000.00000000
-// 192.168.0.0/16 (16 bit block) = 11000000.10101000. 00000000.00000000
+/*
+    binary octets for RFC1918 networks
+    10.0.0.0/8 (24 bit block)     = 00001010. 00000000.00000000.00000000
+    172.16.0.0/12 (20 bit block)  = 10110000.0001 0000.00000000.00000000
+    192.168.0.0/16 (16 bit block) = 11000000.10101000. 00000000.00000000
+*/
 func ConvertDecimalTo32BitBinaryString(num int64) string {
 	var binaryString string
 	binaryString = fmt.Sprintf("%b", num)
@@ -181,8 +187,9 @@ func ConvertDecimalTo32BitBinaryString(num int64) string {
 	}
 	return binaryString
 }
-
-// Calcute the range of IP addreses between a first and last set of IP addresses expresses as binary strings
+/*
+    Calcute the range of IP addreses between a first and last set of IP addresses expresses as binary strings
+*/
 func CalculateIPv4AddressPool(r *ranges) []IpAddress {
 	var ipPool []IpAddress
 	var decimalPool []int64
@@ -196,9 +203,11 @@ func CalculateIPv4AddressPool(r *ranges) []IpAddress {
 	return ipPool
 }
 
-// Calculates the number of hosts available for a certain netmask
-// This function is used to retrieve the end index number of a addressSpace.IpPool
-// when a new subnet is fitted within it.
+/*
+    Calculates the number of hosts available for a certain netmask
+    This function is used to retrieve the end index number of a addressSpace.IpPool
+    when a new subnet is fitted within it.
+*/
 func MaskHostsSize(mask int) int {
     hostBits := 32 - mask
     binary := fmt.Sprintf("%s", strings.Repeat("1", hostBits))
@@ -210,8 +219,9 @@ func MaskHostsSize(mask int) int {
     return int(size) + 1
 } 
 
-
-// See if a child addressSpace actually is a legal fit within a parent addressSpace
+/*
+    See if a child addressSpace actually is a legal fit within a parent addressSpace
+*/
 func ChildWithinScope(parent *AddressSpace, child *AddressSpace) bool {
 	var withinScope bool
 	if child.ranges.decimin >= parent.ranges.decimin && child.ranges.decimax <= parent.ranges.decimax {
@@ -220,7 +230,9 @@ func ChildWithinScope(parent *AddressSpace, child *AddressSpace) bool {
 	return withinScope
 }
 
-// Retrieves the start and stop for first and last ips in a larger collection of IP addresses
+/*
+    Retrieves the start and stop for first and last ips in a larger collection of IP addresses
+*/
 func IpPoolChunkIndexes(pool *IpPool, firstIp, lastIp string) (int, int) {
 	var start int
 	var stop int

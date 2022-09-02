@@ -78,7 +78,7 @@ func TestCalculateSubnets(t *testing.T) {
 		var result Output
 		result = Cases[caseIndex].input.calculateSubnets()
 		for i := range result.Parameters {
-			found := false
+			valid := false
 			for j := 0; j < len(result.Parameters) && found == false; j++ {
 
 				expName := Cases[caseIndex].expected.Parameters[i].Name
@@ -87,10 +87,10 @@ func TestCalculateSubnets(t *testing.T) {
 				resultPrefix := result.Parameters[j].Prefix
 
 				if expName == resultName && expPrefix == resultPrefix {
-					found = true
+					valid = true
 				}
 			}
-			if found == false {
+			if valid == false {
 				t.Errorf("calculateSubnets(%v) = %v; want %v", Cases[caseIndex].input, result.Parameters, Cases[caseIndex].expected)
 			} else {
 				t.Logf("%v -- test OK!", Cases[caseIndex].description)

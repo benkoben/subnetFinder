@@ -55,6 +55,9 @@ type VirtualNetwork struct {
 	DesiredSubnets []map[string]int `json:"desiredSubnets"`
 }
 
+/*
+    Convert json string from the command line into a struct
+*/
 func (vnet *VirtualNetwork) unmarshalVirtualNetwork(jsonString []byte) {
 	jsonErr := json.Unmarshal(jsonString, &data)
 	if jsonErr != nil {
@@ -62,12 +65,19 @@ func (vnet *VirtualNetwork) unmarshalVirtualNetwork(jsonString []byte) {
 	}
 }
 
+/*
+    Splits an subnet prefix into two parts
+    string{192.168.0.0}, int{24}
+*/
 func splitAddressNetmask(s string) (string, int) {
 	cidr, _ := strconv.Atoi(strings.Split(s, "/")[1])
 	address := strings.Split(s, "/")[0]
 	return address, cidr
 }
 
+/* 
+    Save the current virtual network and calculates the possible subnets
+*/
 func (d *VirtualNetwork) calculateSubnets() Output {
 	var addressSpaces []subnetcalc.AddressSpace // collection that holds all addressPrefixes present in virtual network
 	var subnets []subnetcalc.AddressSpace       // collection that holds subnets that already exist in virtual network
@@ -112,35 +122,18 @@ func (d *VirtualNetwork) calculateSubnets() Output {
             }
         } 
     }
-		// Save addressSpace to collection
 
-		// for z := range d.DesiredSubnets {
-        //     for key, val := range d.DesiredSubnets[z] {
-        //         log.Println(addressSpaces[i].IpSubnet)
-        //         subnet := addressSpaces[i].NewSubnet(val)
-        //         log.Println(key, subnet.IpSubnet)
-        //     }
-            // var subnet = subnetcalc.AddressSpace{}
-			// for key, val := range d.DesiredSubnets[z] {
-			// 	subnet = addressSpaces[i].NewSubnet(val)
-            //     // log.Println(addressSpaces[i], subnet)
-            //     if subnet.IpSubnet != nil {
-			//         prefix := fmt.Sprintf("%s/%d", subnet.IpSubnet.GetIPAddress(), subnet.IpSubnet.GetNetworkSize())
-			//         s := Subnet{key, prefix}
-            //         log.Println(s)
-			//         calculatedSubnets = append(calculatedSubnets, s)
-            //     } 
-			// }
 	output := Output{Parameters: calculatedSubnets}
 	return output
 }
 
 func main() {
 	flag.Parse()
-
-	if len(*vnet) > 0 { // when reading vnet details from cmdline flag
+    // when reading vnet details from cmdline flag
+	if len(*vnet) > 0 { 
 		data.unmarshalVirtualNetwork([]byte(*vnet))
-	} else { // when reading vnet details from stdin
+    // when reading vnet details from stdin
+	} else { 
 		bytes, inputErr := io.ReadAll(os.Stdin)
 		if inputErr != nil {
 			log.Printf("Input error %v", inputErr)
