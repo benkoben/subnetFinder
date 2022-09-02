@@ -56,7 +56,6 @@ type VirtualNetwork struct {
     AddressSpace   SpaceCollection    `json:"addressSpace"`
     Subnets         []string          `json:"subnets"`
     DesiredSubnets  []map[string]int  `json:"desiredSubnets"`
-    Location        *string            `json:"location"`
 }
 
 func (vnet *VirtualNetwork) unmarshalVirtualNetwork(jsonString []byte){
