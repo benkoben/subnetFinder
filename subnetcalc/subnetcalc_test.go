@@ -16,10 +16,6 @@ func splitAddressNetmask(s string) (string, int){
     return address, cidr
 }
 
-// Method testing cases
-
-
-
 // The second struct (named "expectedChild") in the input also acts as the expected result
 var CaseNewSubnet = []struct {
 	description string
