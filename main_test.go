@@ -79,7 +79,7 @@ func TestCalculateSubnets(t *testing.T) {
 		result = Cases[caseIndex].input.calculateSubnets()
 		for i := range result.Parameters {
 			valid := false
-			for j := 0; j < len(result.Parameters) && found == false; j++ {
+			for j := 0; j < len(result.Parameters) && valid == false; j++ {
 
 				expName := Cases[caseIndex].expected.Parameters[i].Name
 				expPrefix := Cases[caseIndex].expected.Parameters[i].Prefix
