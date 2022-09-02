@@ -25,7 +25,7 @@ Input is read form STDIN or from a flag. The input string must represent a JSON 
 
 **Method 1:**
 ```
-az network vnet show -n hub-vnet-weeu-dev-001 -g connectivity-rg-weeu-dev-001 -o json | go run main.go -new-subnets '[{"aks":24}, {"dbxPriv": 28}, {"dbsPub": 22}]'
+$> az network vnet show -n hub-vnet-weeu-dev-001 -g connectivity-rg-weeu-dev-001 -o json | go run main.go -new-subnets '[{"aks":24}, {"dbxPriv": 28}, {"dbsPub": 22}]'
 
 {
   "parameters": [
@@ -47,6 +47,23 @@ az network vnet show -n hub-vnet-weeu-dev-001 -g connectivity-rg-weeu-dev-001 -o
 
 **Method 2:**
 ```
-VNET=$(az network vnet show -n hub-vnet-weeu-dev-001 -g connectivity-rg-weeu-dev-001 -o json)
-go run main.go -new-subnets -vnet "${VNET}"
+$> VNET=$(az network vnet show -n hub-vnet-weeu-dev-001 -g connectivity-rg-weeu-dev-001 -o json)
+$> go run main.go -new-subnets -vnet "${VNET}"
+
+{
+  "parameters": [
+    {
+      "name": "aks",
+      "prefix": "10.100.0.0/24"
+    },
+    {
+      "name": "dbxPriv",
+      "prefix": "10.100.1.0/28"
+    },
+    {
+      "name": "dbsPub",
+      "prefix": "10.100.4.0/22"
+    }
+  ]
+}}
 ```
