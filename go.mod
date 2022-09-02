@@ -1,4 +1,4 @@
-module mymodule
+module subnetFinder
 
 go 1.18
 
