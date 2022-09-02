@@ -7,7 +7,7 @@ import (
 var Cases = []struct {
 	input    VirtualNetwork
 	expected Output
-    description string
+    	description string
 }{
 	{
 		input: VirtualNetwork{
