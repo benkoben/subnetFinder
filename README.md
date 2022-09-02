@@ -20,10 +20,7 @@ How to use?
 
 ```
 az network vnet show -n hub-vnet-weeu-dev-001 -g connectivity-rg-weeu-dev-001 -o json | go run main.go -new-subnets '[{"aks":24}, {"dbxPriv": 28}, {"dbsPub": 22}]'
-2022/08/31 15:22:32 Reading from stdin
-2022/08/31 15:22:37 json addressPrefixes: []string{"10.100.0.0/16"}
-2022/08/31 15:22:37 json subnets: []string{}
-2022/08/31 15:22:37 json subnets: []map[string]int{map[string]int{"aks":24}, map[string]int{"dbxPriv":28}, map[string]int{"dbsPub":22}}
+
 {
   "parameters": [
     {
