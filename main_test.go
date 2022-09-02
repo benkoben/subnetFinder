@@ -4,6 +4,7 @@ import (
 	"testing"
 )
 
+
 var Cases = []struct {
 	input    VirtualNetwork
 	expected Output
@@ -17,7 +18,6 @@ var Cases = []struct {
 				{"dbxPriv": 22},
 				{"dbxPub": 28},
 			},
-			"westeurope",
         },
         expected: Output{[]Subnet{
 	    		Subnet{"aks", "10.100.0.0/24"},
@@ -36,7 +36,6 @@ var Cases = []struct {
 				{"subnet3": 26},
 				{"subnet4": 27},
 			},
-			"westeurope",
         },
         expected: Output{[]Subnet{
 	    		Subnet{"subnet1", "192.168.0.0/25"},
