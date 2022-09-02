@@ -8,20 +8,15 @@ Why I created this
 
 In some cases when landingzones in the cloud start growing. I created this tool in order to calculate subnets prefixes within an existing virtual network in order to make infrastrucutre deployments fully automated. Think "project vending machine" and "network provisioning". 
 
-Testing
-===
-
-Unit testing is done by editing `subnetcalc_tests.go`. Tests are comprised of:
-1. A Case variable - Describes the input and expected output
-2. A test function - Calls the function or method thats tested with Case variable as argument.
-
 How to use?
 ==
 
-Input is read form STDIN or from a flag. The input string must represent a JSON structure that has the following keys:
+VNET object is read form STDIN or from the `-vnet` flag. The input string must represent a JSON structure that has the following keys:
 
 * `addressSpace.addressPrefixes: []`
 * `subnets: []`
+
+Desired subnets are read from the `-new-subnets` flag
 
 **Method 1:**
 ```
