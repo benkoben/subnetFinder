@@ -1,7 +1,7 @@
 Subnetcalc
 ===
 
-A simple program that calculcates the next possible subnets inside an existing subnet range. 
+A simple program that calculates the next possible subnets inside an existing subnet range. 
 
 Why I created this
 ===
