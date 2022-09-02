@@ -1,3 +1,6 @@
+![example branch parameter](https://github.com/benkoben/subnetFinder/actions/workflows/build.yml/badge.svg?branch=master)
+
+
 Subnetcalc
 ===
 
