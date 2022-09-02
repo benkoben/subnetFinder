@@ -1,8 +1,5 @@
 package main
 
-// TODO:
-// - Rewrite the main module so that it can be used as an API
-
 import (
 	"encoding/json"
 	"flag"
@@ -84,7 +81,6 @@ func (d *VirtualNetwork) calculateSubnets() Output {
 		addressSpaces = append(addressSpaces, a)
 	}
 	// Create addressSpace objects for each subnet
-	// These will be added to their corresponding parent addressSpace
 	for i := range d.Subnets {
 		var s subnetcalc.AddressSpace
 		address, cidr := splitAddressNetmask(d.Subnets[i])
@@ -96,19 +92,45 @@ func (d *VirtualNetwork) calculateSubnets() Output {
 	// https://stackoverflow.com/questions/20185511/range-references-instead-values
 	for i, a := range addressSpaces {
 		for j := range subnets {
-			a.SetChild(&subnets[j])
+			a.SetChild(&subnets[j]) // set child will only be actually set if given subnet fits within parent
 		}
-		// Save addressSpace to collection
+
+
 		addressSpaces[i] = a
-		for z := range d.DesiredSubnets {
-			for key, val := range d.DesiredSubnets[z] {
-				subnet := addressSpaces[i].NewSubnet(val)
-				prefix := fmt.Sprintf("%s/%d", subnet.IpSubnet.GetIPAddress(), subnet.IpSubnet.GetNetworkSize())
-				s := Subnet{key, prefix}
-				calculatedSubnets = append(calculatedSubnets, s)
-			}
-		}
-	}
+    }
+    for i := range d.DesiredSubnets {
+        for key, val := range d.DesiredSubnets[i] {
+            var subnet subnetcalc.AddressSpace
+            for _, a := range addressSpaces {
+                subnet = a.NewSubnet(val) 
+                if subnet.IpSubnet != nil {
+			        prefix := fmt.Sprintf("%s/%d", subnet.IpSubnet.GetIPAddress(), subnet.IpSubnet.GetNetworkSize())
+			        s := Subnet{key, prefix}
+			        calculatedSubnets = append(calculatedSubnets, s)
+                    break
+                }
+            }
+        } 
+    }
+		// Save addressSpace to collection
+
+		// for z := range d.DesiredSubnets {
+        //     for key, val := range d.DesiredSubnets[z] {
+        //         log.Println(addressSpaces[i].IpSubnet)
+        //         subnet := addressSpaces[i].NewSubnet(val)
+        //         log.Println(key, subnet.IpSubnet)
+        //     }
+            // var subnet = subnetcalc.AddressSpace{}
+			// for key, val := range d.DesiredSubnets[z] {
+			// 	subnet = addressSpaces[i].NewSubnet(val)
+            //     // log.Println(addressSpaces[i], subnet)
+            //     if subnet.IpSubnet != nil {
+			//         prefix := fmt.Sprintf("%s/%d", subnet.IpSubnet.GetIPAddress(), subnet.IpSubnet.GetNetworkSize())
+			//         s := Subnet{key, prefix}
+            //         log.Println(s)
+			//         calculatedSubnets = append(calculatedSubnets, s)
+            //     } 
+			// }
 	output := Output{Parameters: calculatedSubnets}
 	return output
 }

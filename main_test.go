@@ -7,6 +7,7 @@ import (
 var Cases = []struct {
 	input    VirtualNetwork
 	expected Output
+    description string
 }{
 	{
 		input: VirtualNetwork{
@@ -24,6 +25,7 @@ var Cases = []struct {
 			Subnet{"dbxPriv", "10.100.4.0/22"},
 		},
 		},
+        description: "Simple green field vnet 1",
 	},
 	{
 		input: VirtualNetwork{
@@ -43,6 +45,31 @@ var Cases = []struct {
 			Subnet{"subnet4", "192.168.1.0/27"},
 		},
 		},
+        description: "simple green field vnet 2",
+	},
+	{
+		input: VirtualNetwork{
+			SpaceCollection{[]string{"192.168.0.0/23", "10.90.90.0/24"}},
+			[]string{"192.168.1.0/25", "192.168.1.128/25"},
+			[]map[string]int{
+				{"192-168-0-X_01": 25},
+				{"192-168-0-X_02": 25},
+				{"10-90-90-X_01": 26},
+				{"10-90-90-X_02": 26},
+				{"10-90-90-X_03": 26},
+				{"10-90-90-X_04": 26},
+			},
+		},
+		expected: Output{[]Subnet{
+			Subnet{"192-168-0-X_01", "192.168.0.0/25"},
+			Subnet{"192-168-0-X_02", "192.168.0.128/25"},
+			Subnet{"10-90-90-X_01", "10.90.90.0/26"},
+			Subnet{"10-90-90-X_02", "10.90.90.64/26"},
+			Subnet{"10-90-90-X_03", "10.90.90.128/26"},
+			Subnet{"10-90-90-X_04", "10.90.90.192/26"},
+		},
+		},
+        description: "Existing VNET with pre-allocated subnets and multiple addressSpaces",
 	},
 }
 
@@ -66,7 +93,7 @@ func TestCalculateSubnets(t *testing.T) {
 			if found == false {
 				t.Errorf("calculateSubnets(%v) = %v; want %v", Cases[caseIndex].input, result.Parameters, Cases[caseIndex].expected)
 			} else {
-				t.Logf("%v calculateSubnets test OK!", Cases[caseIndex].expected.Parameters[i].Name)
+				t.Logf("%v -- test OK!", Cases[caseIndex].description)
 			}
 		}
 	}

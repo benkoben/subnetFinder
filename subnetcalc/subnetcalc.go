@@ -1,13 +1,14 @@
 package subnetcalc
 
- // TODO: 
- //       Start a function that calculcates new addresses according to desired state
+// TODO:
+//       Start a function that calculcates new addresses according to desired state
 
 import (
 	"fmt"
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
 	"github.com/brotherpowers/ipsubnet"
 )
 
@@ -15,7 +16,7 @@ import (
 // --- Global variables
 //
 
-// 
+//
 // --- Custom errors
 //
 
