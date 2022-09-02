@@ -48,7 +48,8 @@ $> az network vnet show -n hub-vnet-weeu-dev-001 -g connectivity-rg-weeu-dev-001
 **Method 2:**
 ```
 $> VNET=$(az network vnet show -n hub-vnet-weeu-dev-001 -g connectivity-rg-weeu-dev-001 -o json)
-$> go run main.go -new-subnets -vnet "${VNET}"
+$> DESIRED_SUBNETS='[{"aks":24}, {"dbxPriv": 28}, {"dbsPub": 22}]'
+$> go run main.go -new-subnets "${DESIRED_SUBNETS}" -vnet "${VNET}"
 
 {
   "parameters": [
