@@ -1,4 +1,4 @@
-module subnetFinder
+github.com/benkoben/subnetFinder
 
 go 1.18
 
