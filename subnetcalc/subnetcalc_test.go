@@ -2,22 +2,13 @@ package subnetcalc
 
 import (
 	"fmt"
-    "testing"
-    "strings"
-    "strconv"
+	"testing"
 )
 
 // Helper functions
 
-func splitAddressNetmask(s string) (string, int){
-    cidr, _ := strconv.Atoi(strings.Split(s, "/")[1])
-    address := strings.Split(s, "/")[0]
-
-    return address, cidr
-}
-
 // The second struct (named "expectedChild") in the input also acts as the expected result
-var CaseNewSubnet = []struct {
+var CasenewSubnet = []struct {
 	description string
 	input       []struct {
 		name            string
@@ -47,51 +38,6 @@ var CaseNewSubnet = []struct {
 				address:         "10.0.1.0",
 			},
 		},
-	},
-}
-
-// Function Testing cases
-var CaseChildWithinScope = []struct {
-	description string
-	input       []struct {
-		address string
-		cidr    int
-	}
-	expected bool
-}{
-	{
-		description: "Should pass",
-		input: []struct {
-			address string
-			cidr    int
-		}{
-			{
-				address: "10.0.0.0",
-				cidr:    24,
-			},
-			{
-				address: "10.0.0.128",
-				cidr:    25,
-			},
-		},
-		expected: true,
-	},
-	{
-		description: "Should fail",
-		input: []struct {
-			address string
-			cidr    int
-		}{
-			{
-				address: "10.0.0.0",
-				cidr:    24,
-			},
-			{
-				address: "10.0.1.0",
-				cidr:    25,
-			},
-		},
-		expected: false,
 	},
 }
 
@@ -177,7 +123,7 @@ var CaseConvertBinaryStringToDottedDecimalIPv4 = []struct {
 var CaseCalculateIPv4AddressPool = []struct {
 	description string
 	input       *ranges
-	expected    []IpAddress
+	expected    []ipAddress
 }{
 	{
 		description: "Create IPv4Pool for 10.0.0.0/30",
@@ -189,11 +135,80 @@ var CaseCalculateIPv4AddressPool = []struct {
 			addrmin: "10.0.0.1",
 			addrmax: "10.0.0.3",
 		},
-		expected: []IpAddress{
-			IpAddress{address: "10.0.0.1", mask: 32, available: true},
-			IpAddress{address: "10.0.0.2", mask: 32, available: true},
-			IpAddress{address: "10.0.0.3", mask: 32, available: true},
+		expected: []ipAddress{
+			ipAddress{address: "10.0.0.1", mask: 32, available: true},
+			ipAddress{address: "10.0.0.2", mask: 32, available: true},
+			ipAddress{address: "10.0.0.3", mask: 32, available: true},
 		},
+	},
+}
+
+var Cases = []struct {
+	input       VirtualNetwork
+	expected    Output
+	description string
+}{
+	{
+		input: VirtualNetwork{
+			SpaceCollection{[]string{"10.100.0.0/16"}},
+			[]string{},
+			[]map[string]int{
+				{"aks": 24},
+				{"dbxPriv": 22},
+				{"dbxPub": 28},
+			},
+		},
+		expected: Output{[]Subnet{
+			Subnet{"aks", "10.100.0.0/24"},
+			Subnet{"dbxPub", "10.100.1.0/28"},
+			Subnet{"dbxPriv", "10.100.4.0/22"},
+		},
+		},
+		description: "Simple green field vnet 1",
+	},
+	{
+		input: VirtualNetwork{
+			SpaceCollection{[]string{"192.168.0.0/16"}},
+			[]string{},
+			[]map[string]int{
+				{"subnet1": 25},
+				{"subnet2": 26},
+				{"subnet3": 26},
+				{"subnet4": 27},
+			},
+		},
+		expected: Output{[]Subnet{
+			Subnet{"subnet1", "192.168.0.0/25"},
+			Subnet{"subnet2", "192.168.0.128/26"},
+			Subnet{"subnet3", "192.168.0.192/26"},
+			Subnet{"subnet4", "192.168.1.0/27"},
+		},
+		},
+		description: "simple green field vnet 2",
+	},
+	{
+		input: VirtualNetwork{
+			SpaceCollection{[]string{"192.168.0.0/23", "10.90.90.0/24"}},
+			[]string{"192.168.1.0/25", "192.168.1.128/25"},
+			[]map[string]int{
+				{"192-168-0-X_01": 25},
+				{"192-168-0-X_02": 25},
+				{"10-90-90-X_01": 26}, // här
+				{"10-90-90-X_02": 26},
+				{"10-90-90-X_03": 26},
+				{"10-90-90-X_04": 26},
+			},
+		},
+		expected: Output{[]Subnet{
+			Subnet{"192-168-0-X_01", "192.168.0.0/25"},
+			Subnet{"192-168-0-X_02", "192.168.0.128/25"},
+			Subnet{"10-90-90-X_01", "10.90.90.0/26"},
+			Subnet{"10-90-90-X_02", "10.90.90.64/26"},
+			Subnet{"10-90-90-X_03", "10.90.90.128/26"},
+			Subnet{"10-90-90-X_04", "10.90.90.192/26"},
+		},
+		},
+		description: "Existing VNET with pre-allocated subnets and multiple addressSpaces",
 	},
 }
 
@@ -201,31 +216,60 @@ var CaseCalculateIPv4AddressPool = []struct {
 // Testing methods start here
 // --
 
-func TestCaseNewSubnet(t *testing.T){
-    for _, i := range CaseNewSubnet {
-        var p AddressSpace // acts as the parent
-        var c AddressSpace // acts as the expected result
-        p.Set(i.input[0].address, i.input[0].size)
-        c.Set(i.input[1].address, i.input[1].size)
-        // Set the existingSubnets for the parent
-        for _, x := range i.input[0].existingSubnets {
-            var existingSubnet AddressSpace
-            address, cidr := splitAddressNetmask(x)
-            existingSubnet.Set(address, cidr)
-            p.SetChild(&existingSubnet)
-        }
-        // Call the NewSubnet method in order to allocate a new subnet to the parent 
-        newSubnet := p.NewSubnet(i.input[1].size)
-        // Retrieve a string that holds the expected address/size notation
-        // for both c and newSubnet so that we can perform a string comparison 
-        expected := c.GetCidrNotation()
-        result := newSubnet.GetCidrNotation()
-        if result != expected {
-			t.Errorf("NewSubnet(%v) = %v; want %v", i.input[0].size, result, expected)
-        } else {
-            t.Logf("NewSubnet test OK!")
-        }
-    }
+func TestCalculateSubnets(t *testing.T) {
+	for caseIndex := range Cases {
+		result, err := Cases[caseIndex].input.CalculateSubnets()
+		if err != nil {
+			t.Errorf("CalculateSubnets return an error: %v", err)
+		}
+		for i := range result.Parameters {
+			valid := false
+			for j := 0; j < len(result.Parameters) && valid == false; j++ {
+
+				expName := Cases[caseIndex].expected.Parameters[i].Name
+				expPrefix := Cases[caseIndex].expected.Parameters[i].Prefix
+				resultName := result.Parameters[j].Name
+				resultPrefix := result.Parameters[j].Prefix
+
+				if expName == resultName && expPrefix == resultPrefix {
+					valid = true
+				}
+			}
+			if valid == false {
+				t.Errorf("calculateSubnets(%v) = %v; want %v", Cases[caseIndex].input, result.Parameters, Cases[caseIndex].expected)
+			} else {
+				t.Logf("%v -- test OK!", Cases[caseIndex].description)
+			}
+		}
+	}
+}
+
+func TestCasenewSubnet(t *testing.T) {
+	for _, i := range CasenewSubnet {
+		var p addressSpace // acts as the parent
+		var c addressSpace // acts as the expected result
+		p.set(i.input[0].address, i.input[0].size)
+		c.set(i.input[1].address, i.input[1].size)
+		// Set the existingSubnets for the parent
+		for _, x := range i.input[0].existingSubnets {
+			var existingSubnet addressSpace
+			address, cidr := splitAddressNetmask(x)
+			existingSubnet.set(address, cidr)
+			p.setChild(&existingSubnet)
+		}
+		// Call the newSubnet method in order to allocate a new subnet to the parent
+		newSubnet := p.newSubnet(i.input[1].size)
+
+		// Retrieve a string that holds the expected address/size notation
+		// for both c and newSubnet so that we can perform a string comparison
+		expected := c.getCidrNotation()
+		result := newSubnet.getCidrNotation()
+		if result != expected {
+			t.Errorf("newSubnet(%v) = %v; want %v", i.input[0].size, result, expected)
+		} else {
+			t.Logf("newSubnet test OK!")
+		}
+	}
 }
 
 // --
@@ -234,7 +278,7 @@ func TestCaseNewSubnet(t *testing.T){
 
 func TestConvert32BitBinaryToDecimal(t *testing.T) {
 	for _, i := range CaseConvert32BitBinaryToDecimal {
-		result := Convert32BitBinaryToDecimal(i.input)
+		result := convert32BitBinaryToDecimal(i.input)
 		if result != i.expected {
 			t.Errorf("Convert32BitBinaryToDecimal(%v) = %v; want %v", i.input, result, i.expected)
 		} else {
@@ -245,7 +289,7 @@ func TestConvert32BitBinaryToDecimal(t *testing.T) {
 
 func TestConvertDecimalTo32BitBinaryString(t *testing.T) {
 	for _, i := range CaseConvertDecimalTo32BitBinaryString {
-		result := ConvertDecimalTo32BitBinaryString(i.input)
+		result := convertDecimalTo32BitBinaryString(i.input)
 		if result != i.expected {
 			t.Errorf("Convert32BitBinaryToDecimal(%v) = %v; want %v", i.input, result, i.expected)
 		} else {
@@ -256,7 +300,7 @@ func TestConvertDecimalTo32BitBinaryString(t *testing.T) {
 
 func TestConvertBinaryStringToDottedDecimalIPv4(t *testing.T) {
 	for _, i := range CaseConvertBinaryStringToDottedDecimalIPv4 {
-		result := ConvertBinaryStringToDottedDecimalIPv4(i.input)
+		result := convertBinaryStringToDottedDecimalIPv4(i.input)
 		if result != i.expected {
 			t.Errorf("ConvertBinaryStringToDottedDecimalIPv4(%v) = %v; want %v", i.input, result, i.expected)
 		} else {
@@ -268,7 +312,7 @@ func TestConvertBinaryStringToDottedDecimalIPv4(t *testing.T) {
 func TestCalculateIPv4AddressPool(t *testing.T) {
 	var errMsg string
 	for _, i := range CaseCalculateIPv4AddressPool {
-		result := CalculateIPv4AddressPool(i.input)
+		result := calculateIPv4AddressPool(i.input)
 		errMsg = fmt.Sprintf("CalculateIPv4AddressPool(%v) = %v; want %v", i.input, result, i.expected)
 		if result == nil {
 			t.Errorf(errMsg)
@@ -285,27 +329,11 @@ func TestCalculateIPv4AddressPool(t *testing.T) {
 
 func TestMaskHostsSize(t *testing.T) {
 	for _, i := range CaseMaskHostsSize {
-		result := MaskHostsSize(i.input)
+		result := maskHostsSize(i.input)
 		if result != i.expected {
 			t.Errorf("MaskHostsSize(%v) = %v; want %v", i.input, result, i.expected)
 		} else {
 			t.Logf("MaskHostsSize test OK!")
-		}
-	}
-}
-
-func TestChildWithinScoppe(t *testing.T) {
-	for _, i := range CaseChildWithinScope {
-		var p AddressSpace
-		var c AddressSpace
-		p.Set(i.input[0].address, i.input[0].cidr)
-		c.Set(i.input[1].address, i.input[1].cidr)
-
-		result := ChildWithinScope(&p, &c)
-		if result != i.expected {
-			t.Errorf("ChildWithinScope(%v/%v, %v/%v) = %v; want %v", i.input[0].address, i.input[0].cidr, i.input[1].address, i.input[1].cidr, result, i.expected)
-		} else {
-			t.Logf("ChildWithinScope test OK!")
 		}
 	}
 }
