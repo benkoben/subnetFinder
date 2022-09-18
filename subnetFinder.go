@@ -1,4 +1,6 @@
-package main
+package subnetFinder
+
+// Logic that handles input translation is located in this file
 
 import (
 	"encoding/json"
@@ -9,7 +11,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"subnetFinder/subnetcalc"
 )
 
 var (
@@ -76,14 +77,14 @@ func splitAddressNetmask(s string) (string, int) {
 }
 
 /*
-	Save the current virtual network and calculates the possible subnets
+Save the current virtual network and calculates the possible subnets
 */
 func (d *VirtualNetwork) calculateSubnets() Output {
-	var addressSpaces []subnetcalc.AddressSpace // collection that holds all addressPrefixes present in virtual network
-	var subnets []subnetcalc.AddressSpace       // collection that holds subnets that already exist in virtual network
-	var calculatedSubnets = []Subnet{}          // collection of subnets calculated after input processing
+	var addressSpaces []AddressSpace   // collection that holds all addressPrefixes present in virtual network
+	var subnets []AddressSpace         // collection that holds subnets that already exist in virtual network
+	var calculatedSubnets = []Subnet{} // collection of subnets calculated after input processing
 	for i := range d.AddressSpace.AddressPrefixes {
-		var a subnetcalc.AddressSpace
+		var a AddressSpace
 		address, cidr := splitAddressNetmask(d.AddressSpace.AddressPrefixes[i])
 		// Populate the parent addressSpace
 		a.Set(address, cidr)
@@ -92,7 +93,7 @@ func (d *VirtualNetwork) calculateSubnets() Output {
 	}
 	// Create addressSpace objects for each subnet
 	for i := range d.Subnets {
-		var s subnetcalc.AddressSpace
+		var s AddressSpace
 		address, cidr := splitAddressNetmask(d.Subnets[i])
 		s.Set(address, cidr)
 		subnets = append(subnets, s)
@@ -109,7 +110,7 @@ func (d *VirtualNetwork) calculateSubnets() Output {
 	}
 	for i := range d.DesiredSubnets {
 		for key, val := range d.DesiredSubnets[i] {
-			var subnet subnetcalc.AddressSpace
+			var subnet AddressSpace
 			for _, a := range addressSpaces {
 				subnet = a.NewSubnet(val)
 				if subnet.IpSubnet != nil {
