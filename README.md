@@ -6,6 +6,12 @@ Subnetcalc
 
 A simple program that calculates the next possible subnets inside an existing subnet range. 
 
+Features
+===
+* Supports multiple address spaces within a single VNET object
+* No authentication necessary. The program relies on passing information from tools like az-cli, echo or shell variables
+* Runs as a standalone lightweight binary file instead of a script
+
 Why I created this
 ===
 
