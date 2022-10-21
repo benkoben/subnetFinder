@@ -25,8 +25,11 @@ jobs:
     - name: Test
       run: go test -v ./...
 
+    - run: |
+        mkdir -pv /tmp/builds/${{ matrix.os }}_${{ matrix.arch }}
+
     - name: Build
-      run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -v -o /tmp/subnetFinder_${{ matrix.os }}_${{ matrix.arch }} ./... 
+      run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -v -o /tmp/builds/${{ matrix.os }}_${{ matrix.arch }} ./... 
       
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3.1.0
@@ -34,4 +37,4 @@ jobs:
         # Artifact name
         name: drop
         # A file, directory or wildcard pattern that describes what to upload
-        path: /tmp/subnetFinder
+        path: /tmp/builds
