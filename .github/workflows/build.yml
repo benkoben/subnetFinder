@@ -9,6 +9,10 @@ on:
 jobs:
 
   build:
+    strategy:
+      matrix:
+        os: ["linux", "darvin"]
+        arch: ["amd64", "arm64"]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -18,11 +22,11 @@ jobs:
       with:
         go-version: 1.19
 
-    - name: Build
-      run: GOOS=darwin GOARCH=arm64 go build -v -o /tmp ./... 
-
     - name: Test
       run: go test -v ./...
+
+    - name: Build
+      run: GOOS={{ matrix.os }} GOARCH={{ matrix.arch }} go build -v -o /tmp/subnetFinder_{{ matrix.os }}_{{ matrix.arch }} ./... 
       
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3.1.0
