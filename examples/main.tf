@@ -1,16 +1,16 @@
+locals {
+  location = "westeurope"
+  
+}
+
 resource "azurerm_resource_group" "example" {
-  name     = "example-resources"
-  location = "West Europe"
+  name     = "rg-golangexample-weu-dev-01"
+  location = local.location
 }
 
-resource "azurerm_network_security_group" "example" {
-  name                = "example-security-group"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
-}
-
+// -new-subnets '[{"fill-gap-01":25}, {"fill-gap-02": 26}, {"fill-gap-03": 26}]'
 resource "azurerm_virtual_network" "example" {
-  name                = "example-network"
+  name                = "vnet-golangexample-weu-dev-01"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
   address_space       = ["192.168.0.0/23", "10.90.90.0/24"]
@@ -18,15 +18,19 @@ resource "azurerm_virtual_network" "example" {
 
   subnet {
     name           = "pre-existing-subnet01"
-    address_prefix = "10.90.90.0/25"
+    address_prefix = "192.168.0.0/25"
   }
 
   subnet {
     name           = "pre-existing-subnet-02"
-    address_prefix = "10.90.90.128/25"
+    address_prefix = "10.90.90.0/26"
   }
 
-  tags = {
-    environment = "Production"
+  subnet {
+    name           = "pre-existing-subnet-04"
+    address_prefix = "10.90.90.128/26"
   }
+
+  tags = var.tags
 }
+
