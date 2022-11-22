@@ -1,0 +1,4 @@
+github.com/benkoben/azure-subnetcalc-mod v0.0.0-20221122125016-e172ec0818f2 h1:lfl5TjdihyGjEX4drLFk7IMKrQcm/in/PaaukUqLhk8=
+github.com/benkoben/azure-subnetcalc-mod v0.0.0-20221122125016-e172ec0818f2/go.mod h1:1b7WtarLHVOVL7OJzvyuo0OEjW1mf76TABbVF11o8j4=
+github.com/brotherpowers/ipsubnet v0.0.0-20170914094241-30bc98f0a5b1 h1:80OMQcGycPqKFFabSaxOagCh7mgspnMl/X3YGmNi+j0=
+github.com/brotherpowers/ipsubnet v0.0.0-20170914094241-30bc98f0a5b1/go.mod h1:mm9ZF6W76SwZtJpYzrVmTMuzmIhPX0SIuEosW/OTFd4=

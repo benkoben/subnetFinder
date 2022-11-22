@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/benkoben/azure-subnetcalc-mod"
+	subnetcalc "github.com/benkoben/azure-subnetcalc-mod"
 )
 
 var (
