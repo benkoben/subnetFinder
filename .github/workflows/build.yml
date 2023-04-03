@@ -32,3 +32,10 @@ jobs:
         go-version: 1.19
         task-command: build
         artifact-name: drop
+  
+  # Only call the release workflow if a tag has been commited
+  build-release:
+    needs: ["build-publish"]
+    if: github.ref_type == "tag"
+    uses: ./.github/workflows/release.yml
+

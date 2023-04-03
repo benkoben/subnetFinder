@@ -1,0 +1,50 @@
+# https://docs.github.com/en/actions
+
+name: "Release"
+
+on: 
+  workflow_call:
+    
+jobs:
+  release:
+    name: "Release"
+
+    runs-on: "ubuntu-latest"
+
+    steps:
+    - name: "Determine tag"
+      run: |
+       #!/bin/bash
+       
+       # Define the regular expression pattern for semantic versioning
+       SEMVER_REGEX="^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$"
+       TAGS=${GITHUB_REF#refs/tags/}
+       if [[ ${TAGS} =~ $SEMVER_REGEX ]]; then
+         echo "The string '${TAGS}' contains a valid semantic versioning pattern"
+         echo "RELEASE_TAG=${TAGS}" >> $GITHUB_ENV
+       else
+         echo "The string '${TAGS}' does not contain a valid semantic versioning pattern"
+         echo 1
+       fi
+    
+    - name: "Create release"
+      uses: "actions/github-script@v6"
+      with:
+        github-token: "${{ secrets.GITHUB_TOKEN }}"
+        script: |
+          try {
+            const response = await github.rest.repos.createRelease({
+              draft: false,
+              generate_release_notes: true,
+              name: process.env.RELEASE_TAG,
+              owner: context.repo.owner,
+              prerelease: false,
+              repo: context.repo.repo,
+              tag_name: process.env.RELEASE_TAG,
+            });
+    
+            core.exportVariable('RELEASE_ID', response.data.id);
+            core.exportVariable('RELEASE_UPLOAD_URL', response.data.upload_url);
+          } catch (error) {
+            core.setFailed(error.message);
+          }
