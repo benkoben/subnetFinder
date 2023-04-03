@@ -20,12 +20,12 @@ on:
     - 'scripts/**'
 
 jobs:
-  test:
+  build-test:
     uses: ./.github/workflows/test.yml
     with:
       go-version: 1.19
 
-  publish:
+  build-publish:
     needs: ["test"]
     uses: ./.github/workflows/publish.yml
     with:
