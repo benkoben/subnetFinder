@@ -26,6 +26,9 @@ jobs:
       #      echo "The string '${TAGS}' does not contain a valid semantic versioning pattern"
       #      exit 1
       #    fi
+      #
+    - name: "Determine tag"
+      run: "echo \"RELEASE_TAG=${GITHUB_REF#refs/tags/}\" >> $GITHUB_ENV"
     
     - name: "Create release"
       uses: "actions/github-script@v6"
