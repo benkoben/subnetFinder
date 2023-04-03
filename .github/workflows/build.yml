@@ -26,7 +26,7 @@ jobs:
       go-version: 1.19
 
   build-publish:
-    needs: ["test"]
+    needs: ["build-test"]
     uses: ./.github/workflows/publish.yml
     with:
         go-version: 1.19
