@@ -1,4 +1,5 @@
-name: Build
+name: build
+
 on:
   push:
     branches:
@@ -23,27 +24,11 @@ jobs:
     uses: ./.github/workflows/test.yml
     with:
       go-version: 1.19
-  build:
-    runs-on: ubuntu-latest
+
+  publish:
     needs: ["test"]
-    steps:
-    - name: Install Task
-      uses: arduino/setup-task@v1
-      with:
-        version: 3.15.2
-
-    - uses: actions/checkout@v3
-
-    - name: Test
-      run: go test -v ./...
-
-    - run: |
-        task build
-
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v3.1.0
-      with:
-        # Artifact name
-        name: drop
-        # A file, directory or wildcard pattern that describes what to upload
-        path: bin
+    uses: ./.github/workflows/publish.yml
+    with:
+        go-version: 1.19
+        task-command: build
+        artifact-name: drop
