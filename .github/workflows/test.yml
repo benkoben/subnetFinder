@@ -12,6 +12,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
+
     - uses: actions/checkout@v3
       with: 
         repository: ${{ github.repository }}
@@ -21,10 +22,13 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: ${{ inputs.go-version }}
+  
+    - name: debug
+      run: |
+        pwd && ls -la
 
     - name: Download dependencies
       run: |
-        GOROOT=$GITHUB_WORKSPACE
         go get .
         go install golang.org/x/vuln/cmd/govulncheck@latest
 
