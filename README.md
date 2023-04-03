@@ -1,5 +1,4 @@
-[![Build master](https://github.com/RedeployAB/azsubnetfinder/actions/workflows/build.yml/badge.svg)](https://github.com/RedeployAB/azsubnetfinder/actions/workflows/build.yml)
-
+[![build](https://github.com/benkoben/subnetfinder/actions/workflows/build.yml/badge.svg)](https://github.com/benkoben/subnetfinder/actions/workflows/build.yml)
 
 Subnetcalc
 ===
