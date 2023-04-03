@@ -1,4 +1,4 @@
-![example branch parameter](https://github.com/benkoben/subnetFinder/actions/workflows/build.yml/badge.svg?branch=master)
+[![Build master](https://github.com/RedeployAB/azsubnetfinder/actions/workflows/build.yml/badge.svg)](https://github.com/RedeployAB/azsubnetfinder/actions/workflows/build.yml)
 
 
 Subnetcalc

@@ -6,9 +6,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
-
-	subnetcalc "github.com/benkoben/azsubnetcalc"
+    "os"
+    "subnetfinder/subnetcalc"
 )
 
 var (
