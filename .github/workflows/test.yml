@@ -24,6 +24,7 @@ jobs:
 
     - name: Download dependencies
       run: |
+        GOROOT=$GITHUB_WORKSPACE
         go get .
         go install golang.org/x/vuln/cmd/govulncheck@latest
 
